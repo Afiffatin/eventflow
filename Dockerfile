@@ -54,3 +54,4 @@ RUN chmod +x /var/www/docker/start-hfspace.sh
 EXPOSE 7860
 
 CMD ["bash", "/var/www/docker/start-hfspace.sh"]
+# PRK42-25: Docker layer optimizations applied
