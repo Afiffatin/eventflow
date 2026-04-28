@@ -45,3 +45,4 @@ class User extends Authenticatable
         return $this->hasMany(Order::class);
     }
 }
+// PRK42-22: Model relationships defined
