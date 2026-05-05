@@ -116,3 +116,4 @@ return [
     ],
 
 ];
+// PRK42-30: SMTP fallback mechanisms active
