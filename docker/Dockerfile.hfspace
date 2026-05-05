@@ -1,0 +1,56 @@
+FROM php:8.4-apache
+
+# Enable Apache modules and ensure correct MPM for mod_php
+RUN a2dismod mpm_event mpm_worker || true \
+    && a2enmod mpm_prefork rewrite headers
+
+# Install system dependencies + PHP extensions (PostgreSQL + Redis)
+RUN apt-get update && apt-get install -y \
+    git curl libpng-dev libonig-dev libxml2-dev libpq-dev libzip-dev \
+    libfreetype6-dev libjpeg-dev libicu-dev zip unzip \
+    && docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-install pdo pdo_pgsql pgsql mbstring exif pcntl bcmath gd zip intl \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# PHP production settings
+RUN cp /usr/local/etc/php/php.ini-production /usr/local/etc/php/php.ini \
+    && sed -i 's/memory_limit = .*/memory_limit = 256M/' /usr/local/etc/php/php.ini \
+    && sed -i 's/upload_max_filesize = .*/upload_max_filesize = 10M/' /usr/local/etc/php/php.ini \
+    && sed -i 's/post_max_size = .*/post_max_size = 12M/' /usr/local/etc/php/php.ini \
+    && sed -i 's/max_execution_time = .*/max_execution_time = 60/' /usr/local/etc/php/php.ini
+
+# Install Composer
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+
+# Set Apache document root to Laravel's public directory
+RUN sed -ri -e 's!/var/www/html!/var/www/public!g' /etc/apache2/sites-available/*.conf \
+    && sed -ri -e 's!/var/www/!/var/www/public/!g' /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf
+
+# Allow .htaccess overrides (required for Laravel routing)
+RUN sed -i '/<Directory \/var\/www\/public\/>/,/<\/Directory>/ s/AllowOverride None/AllowOverride All/' /etc/apache2/apache2.conf \
+    || echo "<Directory /var/www/public/>\n    AllowOverride All\n    Require all granted\n</Directory>" >> /etc/apache2/apache2.conf
+
+WORKDIR /var/www
+
+# Install PHP dependencies (production only)
+COPY composer.json composer.lock* ./
+RUN composer install --no-dev --no-scripts --no-autoloader --prefer-dist
+
+# Copy application
+COPY . /var/www
+
+# Dump optimized autoloader
+RUN composer dump-autoload --optimize
+
+# HF Spaces runs as non-root user (uid 1000), so we need open permissions
+RUN mkdir -p storage/logs storage/framework/cache storage/framework/sessions storage/framework/views bootstrap/cache storage/app/public \
+    && chmod -R 777 storage bootstrap/cache \
+    && chmod -R 755 public
+
+# Make start script executable
+RUN chmod +x /var/www/docker/start-hfspace.sh
+
+# HF Spaces expects port 7860
+EXPOSE 7860
+
+CMD ["bash", "/var/www/docker/start-hfspace.sh"]
