@@ -90,3 +90,4 @@
     </section>
     @endif
 </x-app-layout>
+<!-- PRK42-45: Fixed responsive layout for payment button and disabled state -->
