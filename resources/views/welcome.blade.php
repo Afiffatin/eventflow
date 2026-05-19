@@ -11,11 +11,11 @@
             Jelajahi ribuan event menarik, beli tiket dengan mudah, dan nikmati pengalaman tak terlupakan bersama Eventify.
         </p>
         <div class="flex flex-wrap justify-center gap-4">
-            <a href="{{ route('events.index') }}" class="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 px-8 py-3.5 rounded-xl font-semibold transition flex items-center gap-2">
+            <a href="{{ route('events.index') }}" class="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 px-8 py-3.5 rounded-xl font-semibold transition flex items-center justify-center gap-2">
                 <i data-lucide="search" class="w-5 h-5"></i> Jelajahi Event
             </a>
             @guest
-                <a href="{{ route('register') }}" class="border border-white/20 hover:bg-white/5 px-8 py-3.5 rounded-xl font-semibold transition">Daftar Gratis</a>
+                <a href="{{ route('register') }}" class="border border-white/20 hover:bg-white/5 px-8 py-3.5 rounded-xl font-semibold transition flex items-center justify-center">Daftar Gratis</a>
             @endguest
         </div>
 
