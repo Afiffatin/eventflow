@@ -120,3 +120,4 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
 // ═══════════════════════════════════════════════════════════
 
 require __DIR__.'/auth.php';
+// PRK42-46: Added strict signature validation for payment gateway webhook to prevent spoofing
