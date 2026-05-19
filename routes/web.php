@@ -41,6 +41,9 @@ Route::middleware('auth')->group(function () {
     Route::get('/checkout/{order}/summary', [CheckoutController::class, 'summary'])->name('checkout.summary');
     Route::post('/checkout/{order}/pay', [CheckoutController::class, 'pay'])->name('checkout.pay');
     Route::get('/checkout/{order}/success', [CheckoutController::class, 'success'])->name('checkout.success');
+    
+    // Mock Payment Webhook for PRK42-35
+    Route::post('/payment/mock-webhook', [CheckoutController::class, 'mockWebhook'])->name('payment.webhook');
 
     // My tickets
     Route::get('/my-tickets', [MyTicketsController::class, 'index'])->name('tickets.index');
