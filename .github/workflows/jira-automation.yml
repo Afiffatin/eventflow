@@ -1,0 +1,59 @@
+name: Jira Automation Pipeline
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    types: [opened, closed]
+
+jobs:
+  jira-sync:
+    name: Sync GitHub events with Jira
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Find Jira Issue Key
+        id: find-issue-key
+        uses: atlassian/gajira-find-issue-key@v3
+        with:
+          string: ${{ github.event.head_commit.message }}
+        continue-on-error: true
+
+      - name: Transition Issue to In Progress (on PR open)
+        if: github.event_name == 'pull_request' && github.event.action == 'opened' && steps.find-issue-key.outputs.issue != ''
+        uses: atlassian/gajira-transition@v3
+        with:
+          issue: ${{ steps.find-issue-key.outputs.issue }}
+          transition: "In Progress"
+        env:
+          JIRA_BASE_URL: ${{ secrets.JIRA_BASE_URL }}
+          JIRA_USER_EMAIL: ${{ secrets.JIRA_USER_EMAIL }}
+          JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
+        continue-on-error: true
+
+      - name: Transition Issue to Done (on Merge)
+        if: github.event_name == 'push' && steps.find-issue-key.outputs.issue != ''
+        uses: atlassian/gajira-transition@v3
+        with:
+          issue: ${{ steps.find-issue-key.outputs.issue }}
+          transition: "Done"
+        env:
+          JIRA_BASE_URL: ${{ secrets.JIRA_BASE_URL }}
+          JIRA_USER_EMAIL: ${{ secrets.JIRA_USER_EMAIL }}
+          JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
+        continue-on-error: true
+
+      - name: Add Jira Comment
+        if: steps.find-issue-key.outputs.issue != ''
+        uses: atlassian/gajira-comment@v3
+        with:
+          issue: ${{ steps.find-issue-key.outputs.issue }}
+          comment: "🚀 Automatically synchronized from GitHub Actions. Commit: ${{ github.sha }}"
+        env:
+          JIRA_BASE_URL: ${{ secrets.JIRA_BASE_URL }}
+          JIRA_USER_EMAIL: ${{ secrets.JIRA_USER_EMAIL }}
+          JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
+        continue-on-error: true
