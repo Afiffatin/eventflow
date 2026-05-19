@@ -9,17 +9,21 @@ class HomeController extends Controller
 {
     public function index()
     {
-        $featuredEvents = Event::with('category', 'ticketTiers', 'organizer')
-            ->published()
-            ->where('start_at', '>=', now())
-            ->orderBy('start_at')
-            ->take(6)
-            ->get();
+        $featuredEvents = \Illuminate\Support\Facades\Cache::remember('featured_events', 60, function() {
+            return Event::with(['category'])
+                ->published()
+                ->upcoming()
+                ->orderBy('start_at')
+                ->take(6)
+                ->get();
+        });
 
-        $categories = Category::withCount(['events' => fn($q) => $q->published()])
-            ->having('events_count', '>', 0)
-            ->orderBy('name')
-            ->get();
+        $categories = \Illuminate\Support\Facades\Cache::remember('active_categories', 60, function() {
+            return Category::withCount(['events' => fn($q) => $q->published()])
+                ->having('events_count', '>', 0)
+                ->orderBy('name')
+                ->get();
+        });
 
         $totalEvents = Event::published()->count();
 
